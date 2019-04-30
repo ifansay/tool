@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Mon Oct 16 22:09:20 2017
 
@@ -57,13 +57,14 @@ separator = sf_config['separator']
 f = open(path_project+'\\recipients.txt', 'r', encoding='utf-8')
 addr_dict, j, error_recipients, error_email = {}, 1, [], []
 for i in f:
-    try:
-        i = i.strip('\n').split('/')
-        addr_dict[i[0], i[1]] = i[2]
-        # ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$ email check
-    except IndexError:
-        print('❤第%d行%s错误' % (j, i))
-    j += 1
+    if ';' not in i and i != '\n':
+        try:
+            i = i.strip('\n').split('/')
+            addr_dict[i[0], i[1]] = i[2]
+            # ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$ email check
+        except IndexError:
+            print('❤第%d行%s错误' % (j, i))
+        j += 1
 f.close()
 
 cate = [i[0] for i in addr_dict if i[1] == 'all']
