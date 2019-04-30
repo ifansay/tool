@@ -18,4 +18,4 @@ separator是文件拆分和邮件助手判定组织的分隔符号。
 双击执行.bat文件，自动下载和安装python文件，如果sf_config.ini配置的文件夹路径不存在，创建文件夹
 仅需第一次安装时使用
 ## 修改配置文件sender.ini和recipients.txt(仅限邮件助手使用)
-# 操作方法
+# 使用方法
