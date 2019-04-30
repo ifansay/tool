@@ -4,7 +4,7 @@
 # 功能实现
 ## excel助手
 通过xlrd、csv读取excel表格文件，通过对list按元素作为key分组或将不同list合并等方式，最后通过xlsxwriter写入excel文件  
-举个栗子  
+*举个栗子*  
 >        城市	学校	姓名	成绩  
 >        北京	1中	张三	45  
 >        北京	2中	李四	42  
