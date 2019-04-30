@@ -3,7 +3,9 @@
 主要是通过迭代对excel拆分、合并、excel&csv格式转换，通过附件发送通过邮件等。
 # 功能实现
 ## excel助手
-通过xlrd、csv读取excel表格文件，通过对list按元素作为key分组或将不同list合并等方式，最后通过xlsxwriter写入excel文件
+通过xlrd、csv读取excel表格文件，通过对list按元素作为key分组或将不同list合并等方式，最后通过xlsxwriter写入excel文件  
+举个栗子  
+excel有6列，分别为城市、学校、年级、班级、姓名、成绩，如果按照第一列城市拆分，则按照每行城市的名称拆分出最后的文件。
 ## 邮件助手
 对附件按文件名字符分成不同组织，和收件人列表recipients.txt映射，如果recipients.txt存在组织收件人，发送到对应的收件人，同时对发送失败的附件发送到发件人邮箱
 # 使用准备
