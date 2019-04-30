@@ -1,7 +1,10 @@
+; 文件格式要按照类型/组织/邮箱地址填写，用"/"隔开，如"1/北京/zhangsan@mail.com/张三"，超过3个"/"为注释内容
+; 组织为all的类型，为公共收件人类型，选择后每封邮件都会抄送他
+; 同一行收件人为多个时，请用英文逗号","隔开
+
+
 f/all/example@mail.com
-1/北京/example@mail.com
-1/成都/example@mail.com
-1/大连/example@mail.com
-2/昆明/example@mail.com
-3/福州/example@mail.com
-3/天津/example@mail.com
+1/nyc/example@mail.com
+1/pek/example@mail.com
+2/tyo/example@mail.com
+2/rio/example@mail.com,example2@mail.com
