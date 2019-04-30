@@ -5,7 +5,7 @@
 ## excel助手
 通过xlrd、csv读取excel表格文件，通过对list按元素作为key分组或将不同list合并等方式，最后通过xlsxwriter写入excel文件
 ## 邮件助手
-对附件，按文件名分组，和收件人列表recipients.txt对应，发送到对应的收件人，同时对发送失败的附件发送到发件人邮箱
+对附件按文件名字符分成不同组织，和收件人列表recipients.txt映射，如果recipients.txt存在组织收件人，发送到对应的收件人，同时对发送失败的附件发送到发件人邮箱
 # 使用准备
 ## 修改配置文件sf_config.ini
 sf_config.ini
