@@ -214,8 +214,12 @@ def send(sender, head, text, to, cc, file, path, server, file_city={}, to_set=se
     receive = str(to+cc).split(',')
     msg = MIMEMultipart()
     if len(sender) == 6:
-        msg.attach(add_attachment(sender[5], 99))
-    list(map(lambda x: msg.attach(add_attachment(x)), file))
+        msg.attach(add_attachment(sender[5], 'pic99'))
+    for f in file:
+        i = 1
+        msg.attach(add_attachment(f, 'f'+str(i)))
+        i += 1
+    # list(map(lambda x: msg.attach(add_attachment(x)), file))
     msg.attach(MIMEText(text, 'html', 'utf-8'))  # plain:text
     msg["from"] = addrFormat("%s<%s>" % tuple(sender[:2]))
     msg["to"] = to
@@ -272,8 +276,8 @@ def infoGet(addr_dict=None, mode='general'):
             mimetext += "<br />"+mimetext_in
             mimetext = mimetext.replace('\n', '<br />')
         if mimetext == '':
-            mimetext = '自动发送.<br />'
-        mimetext += ad+str(uuid.uuid1())
+            mimetext = '<p>自动发送.<br />'
+        mimetext += ad+str(uuid.uuid1())+'</p><br /><br />'
 
         to_in = input("请选择收件人类型(默认1):")
         if to_in == '':
@@ -301,8 +305,8 @@ def mailStruct(header, mimetext, sender, to_add, cc_add, cc_all, city):
     head = city + '^_^' + header + '_M' + time_no()
     sig = ''
     if len(sender) == 6:
-        sig = '<style type="text/css">p.margin {margin: -0.4cm 0cm -0.15cm 0cm}</style><p class="margin"><img src="cid:99" height="50"></p>'
-    normal = mimetext+'<br />'+'--'*max(len(sender[1]),30)+sig+sender[0]+'<br /><a href="mailto:'+sender[1]+'">'+sender[1]
+        sig = '<br /><p><img src="cid:pic99" height="50"></p><br />'
+    normal = mimetext+'--'*max(len(sender[1]),30)+sig+sender[0]+'<br /><a href="mailto:'+sender[1]+'">'+sender[1]
     html = etree.HTML(normal)
     text = etree.tostring(html).decode('utf-8')
     to_city, cc_city = to_add[city], cc_add.get(city, '') + cc_all
@@ -310,9 +314,9 @@ def mailStruct(header, mimetext, sender, to_add, cc_add, cc_all, city):
 
 
 # 发信主函数
-def main(sender, info, recipients, path_done, path, file, separator, file_city):
+def main(sender, info, recipients, path_done, path, file, separator, file_city, server):
     try:
-        server, time_start, sent = login(*sender[1:5]), time.time(), set()
+        time_start, sent = time.time(), set()
         to_set = recipients[0].keys()
         # 服务/起始时间/失败组织/成功组织
         for city in file:
@@ -336,8 +340,6 @@ def main(sender, info, recipients, path_done, path, file, separator, file_city):
         print('TypeError:', e)
     except NameError as e:
         print('NameError:', e)
-    except smtplib.SMTPException as e:
-        print('smtplib.SMTPException:', e)
 
 
 os.chdir(path_mail)
@@ -355,13 +357,16 @@ if file_dict:
         public(file_dict, public_file)
     try:
         sender = sender(path_project)
+        server = login(*sender[1:5])
         info, recipients, confirm = infoGet(addr_dict=addr_dict)
         if not recipients[0]:
             print('\n\033[1;35;43merror:无收件人,不能发信\033[0m')  # 如果只有抄送人,不发信
         elif confirm.lower() == "yes":
-            main(sender, info, recipients, path_mailed, path_mail, file_dict, separator, file_city)
+            main(sender, info, recipients, path_mailed, path_mail, file_dict, separator, file_city, server)
     except KeyError as e:
         print('KeyError:', e)
+    except smtplib.SMTPException as e:
+        print('smtplib.SMTPException:', e)
 
     winsound.Beep(1000, 300)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
 
