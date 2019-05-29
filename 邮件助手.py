@@ -274,12 +274,11 @@ def infoGet(addr_dict=None, mode='general'):
             if not mimetext_in:
                 break
             mimetext += "<br />"+mimetext_in
-            
         if mimetext == '':
             mimetext = '<p>自动发送.<br />'
         mimetext = mimetext.replace('\n', '<br />')
         mimetext += ad+str(uuid.uuid1())+'</p><br /><br />'
-
+        print(mimetext)
         to_in = input("请选择收件人类型(默认1):")
         if to_in == '':
             to_in = '1'
