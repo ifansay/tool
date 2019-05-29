@@ -370,4 +370,4 @@ if file_dict:
 
     winsound.Beep(1000, 300)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
 
-# input('\npress any key to exit')
+input('\npress any key to exit')
