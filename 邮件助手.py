@@ -75,6 +75,9 @@ for i in cate:
         error_recipients.append(i)
 
 
+ad = '由<a href="mailto:ifansay.chn@qq.com">ifansay</a>开发的<a href="https://github.com/ifansay/tool">智文邮件助手</a>发邮件</p>'
+
+
 # 文件整理
 def filePack(file_list, separator):
     file_dict, public_file, file_set, file_city = {}, set(), set(), {}
@@ -141,16 +144,21 @@ def sender(path):
         input_name = 'DEFAULT'
     config.read(path+'\\sender.ini', encoding='utf-8')
     sender_config = config[input_name]
-    sender = []
-    for i in ['name', 'address', 'password', 'smtp_server', 'smtp_port', 'sig_pic']:
+    sender, sig_extra = [], []
+    index = ['name', 'address', 'password', 'smtp_server', 'smtp_port', 'sig_pic']
+    for i in index:
         if i in sender_config:
             sender.append(sender_config[i])
+    for j in sender_config:
+        if j not in index:
+            sig_extra.append(sender_config[j].replace('\n', '<br />'))
+    print(sig_extra)
     print('(*￣︶￣)欢迎%s,您的发件箱是:%s' % tuple(sender[:2]))
     try:
         speak('hi%s' % sender[0])
     except BaseException:
         pass
-    return sender
+    return sender, sig_extra
 
 
 # 收件人获取
@@ -213,7 +221,7 @@ def send(sender, head, text, to, cc, file, path, server, file_city={}, to_set=se
     # 有逗号的附件,要保证使用此附件的组织都发送完成才能移动附件,即文件对应组织和收件人组织的交集是已发送组织子集
     receive = str(to+cc).split(',')
     msg = MIMEMultipart()
-    if len(sender) == 6:
+    if len(sender) >= 6:
         msg.attach(add_attachment(sender[5], 'pic99'))
     for f in file:
         i = 1
@@ -265,7 +273,6 @@ def failinfo(file):
 # 邮件内容输入
 def infoGet(addr_dict=None, mode='general'):
     cc_all, mimetext = '', ''
-    ad = '<br /><br />由<a href="https://github.com/ifansay/tool">智文邮件助手</a>发送<br />ID:'
     if mode == 'general':
         header_in = input("请输入主题:\n")
         mimetext = input("请分段输入正文:\n")
@@ -277,8 +284,8 @@ def infoGet(addr_dict=None, mode='general'):
         if mimetext == '':
             mimetext = '<p>自动发送.<br />'
         mimetext = mimetext.replace('\n', '<br />')
-        mimetext += ad+str(uuid.uuid1())+'</p><br /><br />'
-        print(mimetext)
+        mimetext = "<p>"+mimetext+"<br /><br />ID:"+str(uuid.uuid1())+"<br />"
+
         to_in = input("请选择收件人类型(默认1):")
         if to_in == '':
             to_in = '1'
@@ -296,17 +303,22 @@ def infoGet(addr_dict=None, mode='general'):
         return [header_in, mimetext], [to_add, cc_add, cc_all], confirm
     else:
         header_in = '失败附件!'+time_no()
-        mimetext = '附件发送失败,请处理.'+ad+str(uuid.uuid1())
+        mimetext = '附件发送失败,请处理.'+ad
         return [header_in, mimetext]
 
 
 # 邮件内容配置
-def mailStruct(header, mimetext, sender, to_add, cc_add, cc_all, city):
+def mailStruct(header, mimetext, sender, to_add, cc_add, cc_all, city, sig_extra):
     head = city + '^_^' + header + '_M' + time_no()
-    sig = ''
+    s, ex = '', ''
     if len(sender) == 6:
-        sig = '<br /><p><img src="cid:pic99" height="50"></p><br />'
-    normal = mimetext+'--'*max(len(sender[1]),30)+sig+sender[0]+'<br /><a href="mailto:'+sender[1]+'">'+sender[1]
+        s = '<img src="cid:pic99" height="50"><br />'
+    if sig_extra:
+        ex = '<br />'.join(sig_extra)+"<br /><br />"
+    n = "<b>"+sender[0]+"</b><br />"
+    m = '<i><a href="mailto:'+sender[1]+'">'+sender[1]+"</a></i><br />"
+    selfinfo = "--"*max(len(sender[1]), 30)+"<br />"+s+n+m+ex
+    normal = mimetext+selfinfo+ad
     html = etree.HTML(normal)
     text = etree.tostring(html).decode('utf-8')
     to_city, cc_city = to_add[city], cc_add.get(city, '') + cc_all
@@ -321,7 +333,7 @@ def main(sender, info, recipients, path_done, path, file, separator, file_city, 
         # 服务/起始时间/失败组织/成功组织
         for city in file:
             try:
-                city_info = mailStruct(*info, sender, *recipients, city)
+                city_info = mailStruct(*info, sender, *recipients, city, sig_extra)
                 send(sender, *city_info, file[city], path_done, server, file_city, to_set, sent, city)
             except KeyError as e:
                 print('KeyError', city, e)
@@ -356,7 +368,7 @@ if file_dict:
     if public_file:
         public(file_dict, public_file)
     try:
-        sender = sender(path_project)
+        sender, sig_extra = sender(path_project)
         server = login(*sender[1:5])
         info, recipients, confirm = infoGet(addr_dict=addr_dict)
         if not recipients[0]:
@@ -370,4 +382,4 @@ if file_dict:
 
     winsound.Beep(1000, 300)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
 
-input('\npress any key to exit')
+# input('\npress any key to exit')
