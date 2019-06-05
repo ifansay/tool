@@ -38,8 +38,8 @@ from email import encoders
 from lxml import etree
 
 
-version = '3.0.1'
-update_date = '2019/04/26'
+version = '3.1.1'
+update_date = '2019/06/05'
 
 config = cp.RawConfigParser()
 file_path, code_file = os.path.split(os.path.realpath(__file__))
@@ -60,7 +60,7 @@ for i in f:
     if ';' not in i and i != '\n':
         try:
             i = i.strip('\n').split('/')
-            addr_dict[i[0], i[1]] = i[2]
+            addr_dict[i[0], i[1]] = i[2:]
             # ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$ email check
         except IndexError:
             print('❤第%d行%s错误' % (j, i))
@@ -142,8 +142,9 @@ def sender(path):
     input_name = input('请选择人员:')
     if not input_name:
         input_name = 'DEFAULT'
-    config.read(path+'\\sender.ini', encoding='utf-8')
-    sender_config = config[input_name]
+    configs = cp.RawConfigParser()
+    configs.read(path+'\\sender.ini', encoding='utf-8')
+    sender_config = configs[input_name]
     sender, sig_extra = [], []
     index = ['name', 'address', 'password', 'smtp_server', 'smtp_port', 'sig_pic']
     for i in index:
@@ -152,8 +153,8 @@ def sender(path):
     for j in sender_config:
         if j not in index:
             sig_extra.append(sender_config[j].replace('\n', '<br />'))
-    print(sig_extra)
     print('(*￣︶￣)欢迎%s,您的发件箱是:%s' % tuple(sender[:2]))
+    print('正在登录邮箱,loading...')
     try:
         speak('hi%s' % sender[0])
     except BaseException:
@@ -171,10 +172,18 @@ def recipientsGet(addr_dict, addr_in, cc_all):
             if len([j for j in addr_dict if j[0] == i]) > 1:
                 print('￣へ￣\033[1;31merror:收件人类型 %s 异常' % i)
             else:
-                cc_all += addr_dict[i, 'all']+","
+                cc_all += addr_dict[i, 'all'][0]+","
         else:
             for city in set(j[1] for j in addr_dict if j[0] == i):
-                addr_city[city] = addr_city.get(city, '')+addr_dict.get((i, city), '')+","
+                try:
+                    a = addr_dict[(i, city)]
+                except KeyError:
+                    a = ['','']
+                if city in addr_city:
+                    addr_city[city][0] += ','+a[0]
+                    addr_city[city][1] += ','+a[1]
+                else:
+                    addr_city[city] = a
     return addr_city, cc_all
 
 
@@ -271,18 +280,25 @@ def failinfo(file):
 
 
 # 邮件内容输入
-def infoGet(addr_dict=None, mode='general'):
+def infoGet(path='', addr_dict=None, mode='general'):
     cc_all, mimetext = '', ''
     if mode == 'general':
         header_in = input("请输入主题:\n")
-        mimetext = input("请分段输入正文:\n")
-        while mimetext != "":
-            mimetext_in = input("请继续输入正文:\n")
-            if not mimetext_in:
-                break
-            mimetext += "<br />"+mimetext_in
-        if mimetext == '':
-            mimetext = '<p>自动发送.<br />'
+        if path+'\\mailtext.html':
+            fm = open(path_project+'\\mailtext.html', 'r', encoding='utf-8-sig')
+            mimetext = ''.join(fm.readlines())
+            print('检测到正文文件,正文为("%待替换姓名%"会替换为收件人姓名):')
+            print(mimetext)
+            fm.close()
+        else:
+            mimetext = input("请分段输入正文:\n")
+            while mimetext != "":
+                mimetext_in = input("请继续输入正文:\n")
+                if not mimetext_in:
+                    break
+                mimetext += "<br />"+mimetext_in
+            if mimetext == '':
+                mimetext = '<p>自动发送.<br />'
         mimetext = mimetext.replace('\n', '<br />')
         mimetext = "<p>"+mimetext+"<br /><br />ID:"+str(uuid.uuid1())+"<br />"
 
@@ -318,10 +334,11 @@ def mailStruct(header, mimetext, sender, to_add, cc_add, cc_all, city, sig_extra
     n = "<b>"+sender[0]+"</b><br />"
     m = '<i><a href="mailto:'+sender[1]+'">'+sender[1]+"</a></i><br />"
     selfinfo = "--"*max(len(sender[1]), 30)+"<br />"+s+n+m+ex
+    mimetext = mimetext.replace('%待替换文本%', to_add[city][1])
     normal = mimetext+selfinfo+ad
     html = etree.HTML(normal)
     text = etree.tostring(html).decode('utf-8')
-    to_city, cc_city = to_add[city], cc_add.get(city, '') + cc_all
+    to_city, cc_city = to_add[city][0], cc_add.get(city, [''])[0] + cc_all
     return head, text, to_city, cc_city
 
 
@@ -370,7 +387,7 @@ if file_dict:
     try:
         sender, sig_extra = sender(path_project)
         server = login(*sender[1:5])
-        info, recipients, confirm = infoGet(addr_dict=addr_dict)
+        info, recipients, confirm = infoGet(path_project, addr_dict)
         if not recipients[0]:
             print('\n\033[1;35;43merror:无收件人,不能发信\033[0m')  # 如果只有抄送人,不发信
         elif confirm.lower() == "yes":
