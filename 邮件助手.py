@@ -38,14 +38,14 @@ from email import encoders
 from lxml import etree
 
 
-version = '3.1.1'
-update_date = '2019/06/05'
+version = '3.0.1'
+update_date = '2019/04/26'
 
 config = cp.RawConfigParser()
 file_path, code_file = os.path.split(os.path.realpath(__file__))
 
 config.read(file_path+'\\sf_config.ini', encoding='utf-8')
-sf_config = config['DEFAULT']
+sf_config = config['default']
 path_project = sf_config['project']
 path_file = sf_config['file']
 path_filed = sf_config['filed']
@@ -140,19 +140,19 @@ def time_no():
 def sender(path):
     winsound.Beep(400, 600)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
     input_name = input('请选择人员:')
-    if not input_name:
-        input_name = 'DEFAULT'
     configs = cp.RawConfigParser()
     configs.read(path+'\\sender.ini', encoding='utf-8')
-    sender_config = configs[input_name]
+    if not input_name or input_name not in configs.sections():
+        input_name = configs.sections()[0]
+    sender_config = configs.options(input_name)
     sender, sig_extra = [], []
     index = ['name', 'address', 'password', 'smtp_server', 'smtp_port', 'sig_pic']
     for i in index:
         if i in sender_config:
-            sender.append(sender_config[i])
+            sender.append(configs.get(input_name, i))
     for j in sender_config:
         if j not in index:
-            sig_extra.append(sender_config[j].replace('\n', '<br />'))
+            sig_extra.append(configs.get(input_name, j).replace('\n', '<br />'))
     print('(*￣︶￣)欢迎%s,您的发件箱是:%s' % tuple(sender[:2]))
     print('正在登录邮箱,loading...')
     try:
@@ -178,10 +178,13 @@ def recipientsGet(addr_dict, addr_in, cc_all):
                 try:
                     a = addr_dict[(i, city)]
                 except KeyError:
-                    a = ['','']
+                    a = ['', '']
                 if city in addr_city:
-                    addr_city[city][0] += ','+a[0]
-                    addr_city[city][1] += ','+a[1]
+                    try:
+                        addr_city[city][0] += ','+a[0]
+                        addr_city[city][1] += '、'+a[1]
+                    except IndexError:
+                        pass
                 else:
                     addr_city[city] = a
     return addr_city, cc_all
@@ -228,7 +231,7 @@ def move(file, path):
 def send(sender, head, text, to, cc, file, path, server, file_city={}, to_set=set(), sent=set(), city=''):
     # 发件人/标题/正文/收件人/抄送/附件list/移动后附件路径/服务器/文件对应组织/收件人组织/已发送组织
     # 有逗号的附件,要保证使用此附件的组织都发送完成才能移动附件,即文件对应组织和收件人组织的交集是已发送组织子集
-    receive = str(to+cc).split(',')
+    receive = str(to+','+cc).split(',')
     msg = MIMEMultipart()
     if len(sender) >= 6:
         msg.attach(add_attachment(sender[5], 'pic99'))
@@ -279,6 +282,18 @@ def failinfo(file):
         print('\033[1;31;47merror:not be sent\033[0m')
 
 
+def infoInput():
+    mimetext = input("请分段输入正文:\n")
+    while mimetext != "":
+        mimetext_in = input("请继续输入正文:\n")
+        if not mimetext_in:
+            break
+        mimetext += "<br />"+mimetext_in
+    if mimetext == '':
+        mimetext = '<p>自动发送.<br />'
+    return mimetext
+
+
 # 邮件内容输入
 def infoGet(path='', addr_dict=None, mode='general'):
     cc_all, mimetext = '', ''
@@ -287,18 +302,16 @@ def infoGet(path='', addr_dict=None, mode='general'):
         if path+'\\mailtext.html':
             fm = open(path_project+'\\mailtext.html', 'r', encoding='utf-8-sig')
             mimetext = ''.join(fm.readlines())
+            fm.close()
             print('检测到正文文件,正文为("%待替换姓名%"会替换为收件人姓名):')
             print(mimetext)
-            fm.close()
+            va = input('是否使用此文本作为正文?确认输入"yes":')
+            if va.lower() == "yes":
+                pass
+            else:
+                mimetext = infoInput()
         else:
-            mimetext = input("请分段输入正文:\n")
-            while mimetext != "":
-                mimetext_in = input("请继续输入正文:\n")
-                if not mimetext_in:
-                    break
-                mimetext += "<br />"+mimetext_in
-            if mimetext == '':
-                mimetext = '<p>自动发送.<br />'
+            mimetext = infoInput()
         mimetext = mimetext.replace('\n', '<br />')
         mimetext = "<p>"+mimetext+"<br /><br />ID:"+str(uuid.uuid1())+"<br />"
 
@@ -319,7 +332,7 @@ def infoGet(path='', addr_dict=None, mode='general'):
         return [header_in, mimetext], [to_add, cc_add, cc_all], confirm
     else:
         header_in = '失败附件!'+time_no()
-        mimetext = '附件发送失败,请处理.'+ad
+        mimetext = '附件发送失败,请处理.<br />'+ad
         return [header_in, mimetext]
 
 
