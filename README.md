@@ -39,6 +39,6 @@ ps:**分隔符不建议使用常用标点和.号，容易出现误伤**
 双击执行.bat文件，自动下载和安装python文件，如果sf_config.ini配置的文件夹路径不存在，创建文件夹
 仅需第一次安装时使用
 从python 官方网站下载适合系统的安装文件。
-## 修改配置文件sender.ini和recipients.txt(仅限邮件助手使用)
+## 修改配置文件sender.ini和recipients.txt(邮件助手使用)
 # 使用方法
 # 帮助信息
