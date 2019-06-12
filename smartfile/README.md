@@ -4,4 +4,4 @@
 **filed**     是操作后原文件存放路径   
 **mail**      是excel操作结果的存放路径；待发送文件存放路径   
 **mailed**    是发送后文件存放路径   
-**mailtext**  是邮件正文内容文件，%待替换文本%会替换为*recipients.txt*内容
+**mailtext**  是邮件正文内容文件，%待替换文本%会替换为*recipients.txt*内容，html语法见相关网页
