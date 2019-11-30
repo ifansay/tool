@@ -17,17 +17,16 @@ Created on Mon Oct 16 22:09:20 2017
 import os
 import os.path
 import uuid
-import datetime
 import time
 import shutil
 import smtplib
-import winsound
-import pyttsx3
 import zipfile
-import pythoncom
 import string
 import random
 import configparser as cp
+import winsound
+import pyttsx3
+import pythoncom
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -44,7 +43,7 @@ update_date = '2019/04/26'
 config = cp.RawConfigParser()
 file_path, code_file = os.path.split(os.path.realpath(__file__))
 
-config.read(file_path+'\\sf_config.ini', encoding='utf-8')
+config.read(file_path+'//config.ini', encoding='utf-8')
 sf_config = config['default']
 path_project = sf_config['project']
 path_file = sf_config['file']
@@ -54,7 +53,7 @@ path_mailed = sf_config['mailed']
 separator = sf_config['separator']
 
 # 读取收件人配置
-f = open(path_project+'\\recipients.txt', 'r', encoding='utf-8')
+f = open(path_project+'//recipients.txt', 'r', encoding='utf-8')
 addr_dict, j, error_recipients, error_email = {}, 1, [], []
 for i in f:
     if ';' not in i and i != '\n':
@@ -63,7 +62,7 @@ for i in f:
             addr_dict[i[0], i[1]] = i[2:]
             # ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$ email check
         except IndexError:
-            print('❤第%d行%s错误' % (j, i))
+            print('❤recipients.txt第%d行%s错误' % (j, i))
         j += 1
 f.close()
 
@@ -75,7 +74,7 @@ for i in cate:
         error_recipients.append(i)
 
 
-ad = '由<a href="mailto:ifansay.chn@qq.com">ifansay</a>开发的<a href="https://github.com/ifansay/tool">智文邮件助手</a>发邮件</p>'
+ad = '由<a href="https://github.com/ifansay/tool">智文邮件助手</a>发送.<i>Copyright © 2017-'+time.strftime("%Y", time.localtime())+' <a href="mailto:ifansay.chn@qq.com">ifansay</a></i>.</p>'
 
 
 # 文件整理
@@ -105,7 +104,7 @@ def filePack(file_list, separator):
                     file_dict[com_city].add(file)
                     file_city[file].add(com_city)
 
-            except BaseException:
+            except ValueError:
                 public_file.add(file)
                 file_set.add(file)
     return file_dict, file_set, public_file, file_city
@@ -113,10 +112,13 @@ def filePack(file_list, separator):
 
 
 def speak(characters):
-    pythoncom.CoInitialize()
-    engine = pyttsx3.init()
-    engine.say(characters)
-    engine.runAndWait()
+    try:
+        # pythoncom.CoInitialize()
+        engine = pyttsx3.init()
+        engine.say(characters)
+        engine.runAndWait()
+    except BaseException:
+        pass
 
 
 # 公共附件
@@ -124,41 +126,39 @@ def public(file_dict, public_file):
     print(';其中\033[1;35;47m%s\033[0m作为公共附件发送' % public_file)
     for city in file_dict:
         file_dict[city] = file_dict[city] | public_file
-    try:
-        speak('公共附件%s' % public_file)
-    except BaseException:
-        pass
+    speak('公共附件%s' % public_file)
 
 
 # 时间编号
 def time_no():
-    no = datetime.datetime.today().strftime('%y%m%d')
-    return no
-
+    return time.strftime("%Y%m%d", time.localtime())
 
 # 发件人获取(存在dict中)
 def sender(path):
     winsound.Beep(400, 600)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
-    input_name = input('请选择人员:')
+    input_name = input('请选择发件人:')
     configs = cp.RawConfigParser()
-    configs.read(path+'\\sender.ini', encoding='utf-8')
+    configs.read(path+'//sender.ini', encoding='utf-8')
     if not input_name or input_name not in configs.sections():
-        input_name = configs.sections()[0]
-    sender_config = configs.options(input_name)
+        sender_confirm = input('发件人不存在,按"yes"使用第一发件人:')
+        if sender_confirm.lower() == "yes":
+            input_name = configs.sections()[0]
+
     sender, sig_extra = [], []
-    index = ['name', 'address', 'password', 'smtp_server', 'smtp_port', 'sig_pic']
+    index = ['name', 'address', 'password', 'smtp_server', 'smtp_port', 'sig_pic', 'pic_link']
+
+    sender_config = configs.options(input_name)
     for i in index:
-        if i in sender_config:
+        try:
             sender.append(configs.get(input_name, i))
+        except cp.NoOptionError:
+            break
     for j in sender_config:
         if j not in index:
             sig_extra.append(configs.get(input_name, j).replace('\n', '<br />'))
     print('(*￣︶￣)欢迎%s,您的发件箱是:%s' % tuple(sender[:2]))
     print('正在登录邮箱,loading...')
-    try:
-        speak('hi%s' % sender[0])
-    except BaseException:
-        pass
+    speak('hi%s' % sender[0])
     return sender, sig_extra
 
 
@@ -224,7 +224,7 @@ def move(file, path):
     src = string.ascii_letters+string.digits
     randstr = ''.join(random.sample(src, 6))
     shotname, extension = os.path.splitext(file)
-    shutil.move(file, path+'\\♣'+shotname+'_'+randstr+extension)
+    shutil.move(file, path+'//♣'+shotname+'_'+randstr+extension)
 
 
 # 发送邮件
@@ -277,7 +277,7 @@ def fileZip(path, path_done, separator):
 
 def failinfo(file):
     if file:
-        print('Friendly Tipsfollowing file:')
+        print('friendly tips,the following file:')
         list(map(lambda x: print(x), file))
         print('\033[1;31;47merror:not be sent\033[0m')
 
@@ -299,13 +299,13 @@ def infoGet(path='', addr_dict=None, mode='general'):
     cc_all, mimetext = '', ''
     if mode == 'general':
         header_in = input("请输入主题:\n")
-        if path+'\\mailtext.html':
-            fm = open(path_project+'\\mailtext.html', 'r', encoding='utf-8-sig')
+        if path+'//mailtext.html':
+            fm = open(path_project+'//mailtext.html', 'r', encoding='utf-8-sig')
             mimetext = ''.join(fm.readlines())
             fm.close()
-            print('检测到正文文件,正文为("%待替换姓名%"会替换为收件人姓名):')
+            print('检测到正文文件,正文为("%待替换文本%"会替换为收件人姓名):')
             print(mimetext)
-            va = input('是否使用此文本作为正文?确认输入"yes":')
+            va = input('是否使用此文本作为正文?输入"yes"使用:')
             if va.lower() == "yes":
                 pass
             else:
@@ -322,13 +322,13 @@ def infoGet(path='', addr_dict=None, mode='general'):
         cc_in = input("请选择抄送人类型:")
         while True:
             cc_all_in = input("请添加统一抄送人,多个用英文','隔开:")
-            cc_all += cc_all_in+","
+            cc_all += ","+cc_all_in
             if not cc_all_in:
                 break
 
         to_add, cc_all = recipientsGet(addr_dict, to_in, cc_all)
         cc_add, cc_all = recipientsGet(addr_dict, cc_in, cc_all)
-        confirm = input("输入'yes'确认发送:")
+        confirm = input('输入"yes"发送:')
         return [header_in, mimetext], [to_add, cc_add, cc_all], confirm
     else:
         header_in = '失败附件!'+time_no()
@@ -342,6 +342,8 @@ def mailStruct(header, mimetext, sender, to_add, cc_add, cc_all, city, sig_extra
     s, ex = '', ''
     if len(sender) == 6:
         s = '<img src="cid:pic99" height="50"><br />'
+    if len(sender) == 7:
+        s = '<a href="'+sender[6]+'"><img src="cid:pic99" height="50"></a><br />'
     if sig_extra:
         ex = '<br />'.join(sig_extra)+"<br /><br />"
     n = "<b>"+sender[0]+"</b><br />"
@@ -356,60 +358,60 @@ def mailStruct(header, mimetext, sender, to_add, cc_add, cc_all, city, sig_extra
 
 
 # 发信主函数
-def main(sender, info, recipients, path_done, path, file, separator, file_city, server):
-    try:
-        time_start, sent = time.time(), set()
-        to_set = recipients[0].keys()
-        # 服务/起始时间/失败组织/成功组织
-        for city in file:
-            try:
-                city_info = mailStruct(*info, sender, *recipients, city, sig_extra)
-                send(sender, *city_info, file[city], path_done, server, file_city, to_set, sent, city)
-            except KeyError as e:
-                print('KeyError', city, e)
-            except FileNotFoundError as e:
-                print('FileNotFoundError', e)
+def mainsend(sender, info, recipients, path_done, path, file, separator, file_city, server):
+    time_start, sent = time.time(), set()
+    to_set = recipients[0].keys()
+    # 服务/起始时间/失败组织/成功组织
+    for city in file:
+        try:
+            city_info = mailStruct(*info, sender, *recipients, city, sig_extra)
+            send(sender, *city_info, file[city], path_done, server, file_city, to_set, sent, city)
+        except KeyError as e:
+            print('KeyError', e)
+        except FileNotFoundError as e:
+            print('FileNotFoundError', city, e)
 
-        zfile, fail_file = fileZip(path, path_done, separator)
-        zip_info = infoGet(mode='fail')
-        send(sender[:-1], *zip_info, sender[1], '', [zfile], path_done, server)
-        time_end = time.time()
-        server.quit()
-        print('用时 %.2f 秒' % (time_end-time_start))
-        failinfo(fail_file)
-        winsound.Beep(1000, 600)
-    except TypeError as e:
-        print('TypeError:', e)
-    except NameError as e:
-        print('NameError:', e)
+    zfile, fail_file = fileZip(path, path_done, separator)
+    zip_info = infoGet(mode='fail')
+    send(sender[:-1], *zip_info, sender[1], '', [zfile], path_done, server)
+    time_end = time.time()
+    server.quit()
+    print('用时 %.2f 秒' % (time_end-time_start))
+    failinfo(fail_file)
+    winsound.Beep(1000, 600)
 
 
 os.chdir(path_mail)
 file_list = os.listdir('.')
 
 if __name__ == '__main__':
-    pass
+    file_dict, file_set, public_file, file_city = filePack(file_list, separator)
+    if file_dict:
+        print('^_^欢迎使用智文邮件助手^_^\n')
+        print("理论收件人组织\033[1;34;47m%s\033[0m" % set(file_dict), ",附件\033[1;34;47m%s\033[0m" % file_set, end='')
+        if public_file:
+            public(file_dict, public_file)
+        else:
+            print('')
+        try:
+            sender, sig_extra = sender(path_project)
+            server = login(*sender[1:5])
+            info, recipients, confirm = infoGet(path_project, addr_dict)
+            # if not recipients[0]:
+            # print('\n\033[1;35;43merror:无收件人,不能发信\033[0m')  # 如果只有抄送人,不发信
+            if confirm.lower() == "yes":
+                mainsend(sender, info, recipients, path_mailed, path_mail, file_dict, separator, file_city, server)
+        except KeyError as e:
+            print('KeyError:', e)
+        except smtplib.SMTPException as e:
+            print('smtplib.SMTPException:', e)
+        except TypeError as e:
+            print('TypeError', e)
+        except cp.NoSectionError:
+            print('发件人异常,取消发件')
+        except NameError as e:
+            print('NameError:', e)
 
-file_dict, file_set, public_file, file_city = filePack(file_list, separator)
-
-if file_dict:
-    print('^_^欢迎使用智文邮件助手^_^\n')
-    print("收件人为:\033[1;34;47m%s\033[0m" % set(file_dict), ",附件:\033[1;34;47m%s\033[0m" % file_set, end='')
-    if public_file:
-        public(file_dict, public_file)
-    try:
-        sender, sig_extra = sender(path_project)
-        server = login(*sender[1:5])
-        info, recipients, confirm = infoGet(path_project, addr_dict)
-        if not recipients[0]:
-            print('\n\033[1;35;43merror:无收件人,不能发信\033[0m')  # 如果只有抄送人,不发信
-        elif confirm.lower() == "yes":
-            main(sender, info, recipients, path_mailed, path_mail, file_dict, separator, file_city, server)
-    except KeyError as e:
-        print('KeyError:', e)
-    except smtplib.SMTPException as e:
-        print('smtplib.SMTPException:', e)
-
-    winsound.Beep(1000, 300)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
+        winsound.Beep(1000, 300)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
 
 # input('\npress any key to exit')
