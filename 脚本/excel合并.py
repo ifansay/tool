@@ -1,4 +1,5 @@
-﻿# -*- coding: utf-8 -*-
+#!/usr/bin/env python3﻿
+# -*- coding: utf-8 -*-
 """
 Created on Thu Mar  8 11:17:20 2018
 
@@ -11,22 +12,21 @@ Created on Thu Mar  8 11:17:20 2018
 
 import os
 import os.path
-import datetime
 import time
 import shutil
 import xlrd
 import xlsxwriter
 import re
 import chardet
-import winsound
+#import winsound
 import configparser as cp
 
 
 config = cp.RawConfigParser()
 file_path, code_file = os.path.split(os.path.realpath(__file__))
 
-config.read(file_path+'\\sf_config.ini', encoding='utf-8')
-sf_config = config['DEFAULT']
+config.read(file_path+'//config.ini', encoding='utf-8')
+sf_config = config['default']
 path_project = sf_config['project']
 path_file = sf_config['file']
 path_filed = sf_config['filed']
@@ -37,8 +37,7 @@ separator = sf_config['separator']
 
 # 定义时间编号
 def time_no():
-    no = datetime.datetime.today().strftime('%y%m%d')
-    return no
+    return time.strftime("%Y%m%d", time.localtime())
 
 
 # 读取csv
@@ -110,9 +109,10 @@ def excelRead(file, data, mode):
     return data
 
 
-def excelWrite(data, path_mail=path_mail):
-    file = input('请输入合并后文件名称:\n')
-    workbook = xlsxwriter.Workbook(str(path_mail+'\\'+file+"_C"+time_no()+'.xlsx'))
+def excelWrite(data, file):
+    #winsound.Beep(400, 600)
+    print('正在写入',file)
+    workbook = xlsxwriter.Workbook(str(file+"_C"+time_no()+'.xlsx'))
     top = {"font_name": u'微软雅黑',
            'border': 4,
            'border_color': '50616d',
@@ -141,20 +141,22 @@ if file_list:
     data = {}
     print('^_^欢迎使用智文文件助手^_^\n')
     mode = input('请输入合并模式(1.同名sheet合并0.全部sheet合并,默认0模式):')
+    nf = input('请输入合并后文件名称:\n')
     time_start = time.time()
-    for file in file_list:
-        shotname, extension = os.path.splitext(file)
+    for of in file_list:
+        shotname, extension = os.path.splitext(of)
         if extension in ['.xlsx', '.xls', '.csv']:
-            print(file)
+            print('正在处理', of)
             try:
-                data = excelRead(file, data, mode)
+                data = excelRead(of, data, mode)
             except BaseException:  # xlsxwriter.XLRDError
-                data = csvRead(file, data)
-            shutil.move(file, path_filed+'\\'+shotname+"_CO"+time_no()+extension)
+                data = csvRead(of, data)
+            shutil.move(of, path_filed+'//'+shotname+"_CO"+time_no()+extension)
     if data:
-        excelWrite(data, path_mail)
+        excelWrite(data, path_mail+'//'+nf)
         time_end = time.time()
         print('用时 %.2f 秒' % (time_end - time_start))
-        winsound.Beep(1000, 300)
+        # winsound.Beep(1000, 300)
 
 # input('\npress any key exit')
+
