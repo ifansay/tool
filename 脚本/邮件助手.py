@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @author: ifansay
 # @email: ifansay.chn@qq.com
-"""
+
 # \033[显示方式;字体色;背景色m......[\033[0m]
 # error:red background
 # waring:yellow background
