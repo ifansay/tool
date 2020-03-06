@@ -1,12 +1,7 @@
+#！/usr/local/bin/python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 16 22:09:20 2017
-
-@title:mail self—send
-
-@author: ifansay
-
-@email: ifansay.chn@qq.com
+# @author: ifansay
+# @email: ifansay.chn@qq.com
 """
 # \033[显示方式;字体色;背景色m......[\033[0m]
 # error:red background
@@ -20,13 +15,13 @@ import uuid
 import time
 import shutil
 import smtplib
+# import winsound
+# import pyttsx3
+# import pythoncom
 import zipfile
 import string
 import random
 import configparser as cp
-import winsound
-import pyttsx3
-import pythoncom
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -62,7 +57,7 @@ for i in f:
             addr_dict[i[0], i[1]] = i[2:]
             # ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$ email check
         except IndexError:
-            print('❤recipients.txt第%d行%s错误' % (j, i))
+            print('❤第%d行%s错误' % (j, i))
         j += 1
 f.close()
 
@@ -75,7 +70,6 @@ for i in cate:
 
 
 ad = '由<a href="https://github.com/ifansay/tool">智文邮件助手</a>发送.<i>Copyright © 2017-'+time.strftime("%Y", time.localtime())+' <a href="mailto:ifansay.chn@qq.com">ifansay</a></i>.</p>'
-
 
 # 文件整理
 def filePack(file_list, separator):
@@ -110,23 +104,23 @@ def filePack(file_list, separator):
     return file_dict, file_set, public_file, file_city
     # 组织对应附件/附件通名/公共附件/附件对应组织
 
-
+'''
 def speak(characters):
     try:
-        # pythoncom.CoInitialize()
+        pythoncom.CoInitialize()
         engine = pyttsx3.init()
         engine.say(characters)
         engine.runAndWait()
     except BaseException:
         pass
-
+'''
 
 # 公共附件
 def public(file_dict, public_file):
     print(';其中\033[1;35;47m%s\033[0m作为公共附件发送' % public_file)
     for city in file_dict:
         file_dict[city] = file_dict[city] | public_file
-    speak('公共附件%s' % public_file)
+    # speak('公共附件%s' % public_file)
 
 
 # 时间编号
@@ -135,12 +129,12 @@ def time_no():
 
 # 发件人获取(存在dict中)
 def sender(path):
-    winsound.Beep(400, 600)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
+    # winsound.Beep(400, 600)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
     input_name = input('请选择发件人:')
     configs = cp.RawConfigParser()
     configs.read(path+'//sender.ini', encoding='utf-8')
     if not input_name or input_name not in configs.sections():
-        sender_confirm = input('发件人不存在,按"yes"使用第一发件人:')
+        sender_confirm = input('发件人不存在,按"yes"使用第一发件人')
         if sender_confirm.lower() == "yes":
             input_name = configs.sections()[0]
 
@@ -158,7 +152,7 @@ def sender(path):
             sig_extra.append(configs.get(input_name, j).replace('\n', '<br />'))
     print('(*￣︶￣)欢迎%s,您的发件箱是:%s' % tuple(sender[:2]))
     print('正在登录邮箱,loading...')
-    speak('hi%s' % sender[0])
+    # speak('hi%s' % sender[0])
     return sender, sig_extra
 
 
@@ -303,7 +297,7 @@ def infoGet(path='', addr_dict=None, mode='general'):
             fm = open(path_project+'//mailtext.html', 'r', encoding='utf-8-sig')
             mimetext = ''.join(fm.readlines())
             fm.close()
-            print('检测到正文文件,正文为("%待替换文本%"会替换为收件人姓名):')
+            print('检测到正文文件,正文为("%待替换文本%"会替换为收件人称呼):')
             print(mimetext)
             va = input('是否使用此文本作为正文?输入"yes"使用:')
             if va.lower() == "yes":
@@ -312,7 +306,6 @@ def infoGet(path='', addr_dict=None, mode='general'):
                 mimetext = infoInput()
         else:
             mimetext = infoInput()
-        mimetext = mimetext.replace('\n', '<br />')
         mimetext = "<p>"+mimetext+"<br /><br />ID:"+str(uuid.uuid1())+"<br />"
 
         to_in = input("请选择收件人类型(默认1):")
@@ -349,8 +342,13 @@ def mailStruct(header, mimetext, sender, to_add, cc_add, cc_all, city, sig_extra
     n = "<b>"+sender[0]+"</b><br />"
     m = '<i><a href="mailto:'+sender[1]+'">'+sender[1]+"</a></i><br />"
     selfinfo = "--"*max(len(sender[1]), 30)+"<br />"+s+n+m+ex
-    mimetext = mimetext.replace('%待替换文本%', to_add[city][1])
+    try:
+        mimetext = mimetext.replace('%待替换文本%', to_add[city][1])
+    except:
+        pass
     normal = mimetext+selfinfo+ad
+    normal = normal.replace('\n', '<br />')
+    normal = normal.replace('\\n', '<br />')
     html = etree.HTML(normal)
     text = etree.tostring(html).decode('utf-8')
     to_city, cc_city = to_add[city][0], cc_add.get(city, [''])[0] + cc_all
@@ -378,7 +376,7 @@ def mainsend(sender, info, recipients, path_done, path, file, separator, file_ci
     server.quit()
     print('用时 %.2f 秒' % (time_end-time_start))
     failinfo(fail_file)
-    winsound.Beep(1000, 600)
+    # winsound.Beep(1000, 600)
 
 
 os.chdir(path_mail)
@@ -411,7 +409,7 @@ if __name__ == '__main__':
             print('发件人异常,取消发件')
         except NameError as e:
             print('NameError:', e)
-
-        winsound.Beep(1000, 300)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
+    
+        # winsound.Beep(1000, 300)  # 其中400表示声音大小，1000表示发生时长，1000为1秒
 
 # input('\npress any key to exit')
