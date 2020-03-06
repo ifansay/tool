@@ -4,3 +4,4 @@
 # @email: ifansay.chn@qq.com
 
 https://npm.taobao.org/mirrors/python/
+https://code.visualstudio.com/
